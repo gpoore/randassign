@@ -1,0 +1,41 @@
+% Sample file for randassign
+% G. M. Poore, 2013
+
+\documentclass{article}
+
+\usepackage{nopageno}
+\usepackage{pythontex}
+
+\title{Sample Randomized Assignment \#\input{attempt.tex}}
+\author{Name: \underline{~~~~\input{name.tex}~~~~}}
+
+\begin{sympycode}
+from randassign import RandAssign
+ra = RandAssign()
+ra.solnfmt = '.tex'
+
+from sympy import *
+from sympy.statistics import *
+\end{sympycode}
+
+\begin{document}
+
+\maketitle
+
+\begin{sympycode}
+distr = Uniform(1, 10)
+from sympy.abc import x
+p = int(distr.random())
+eq = Derivative(sin(x)**p, x)
+question = r'What is ${0}$?'.format(latex(eq))
+answer = r'\fbox{{${0}$}}'.format(latex(eq.doit()))
+ra.soln.append(question + ' ' + answer + '\n')
+\end{sympycode}
+
+\sympy{question}
+
+\begin{sympycode}
+ra.cleanup()
+\end{sympycode}
+
+\end{document}
