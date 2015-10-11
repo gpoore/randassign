@@ -2,10 +2,12 @@
 #
 # randassign.py
 #
-# Copyright (c) 2013, Geoffrey M. Poore
+# Copyright (c) 2013-2014, Geoffrey M. Poore
 # Licensed under the BSD 3-Clause License
 # http://opensource.org/licenses/BSD-3-Clause
 #
+
+__version__ = '0.1.1'
 
 import sys
 import os
@@ -17,6 +19,9 @@ except:
     import pickle
 import subprocess
 import textwrap
+import shlex
+from collections import defaultdict
+import atexit
 
 
 
@@ -25,6 +30,12 @@ class RandAssign(object):
     '''
     Class for creating randomized assignments.  Primarily manages the 
     accumulation and creation of per-assignment solutions.
+    
+    Standard usage:
+     * At the beginning of a PythonTeX session, 
+       `from randassign import RandAssign; ra = RandAssign()`.
+     * Within the session, add solution text to the list `ra.soln`.
+     * At the end of the session, call `ra.cleanup()`.
     '''
     def __init__(self, texdir=None, solnfmt='.txt'):
         if texdir is None:
@@ -43,10 +54,12 @@ class RandAssign(object):
         self.solnfmt = solnfmt
     
         self.soln = []
+        
+        atexit.register(self.cleanup)
     
     @property
     def solnfmt(self):
-        """Format for solutions.  Accepts `.txt`, `.csv`, and `.tex`."""
+        '''Format for solutions.  Accepts `.txt`, `.csv`, and `.tex`.'''
         return self._solnfmt
     
     @solnfmt.setter
@@ -60,7 +73,7 @@ class RandAssign(object):
         if not value.startswith('.'):
             value = '.' + value
         if value not in ('.txt', '.csv', '.tex'):
-            raise ValueError('Solution format must be .txt, .csv, or .tex')
+            raise ValueError('Solution format must be ".txt", ".csv", or ".tex"')
         else:
             self._solnfmt = value
     
@@ -96,8 +109,17 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     arguments to `make()`.
     '''
     # Process function args
+    # Make sure texcmd is a list, as needed for subprocess.call()
     if texcmd is None:
         texcmd = ['pdflatex', '-interaction=nonstopmode']
+    else:
+        if sys.version_info.major == 2:
+            if isinstance(texcmd, basestring):
+                texcmd = shlex.split(texcmd)
+        else:
+            if isinstance(texcmd, str):
+                texcmd = shlex.split(texcmd)
+    
     if writesoln is not None:
         if not hasattr(writesoln, '__call__'):
             sys.exit('Argument "writesoln" must be a function')
@@ -168,16 +190,16 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     
     
     
-    # Process command line arguments
+    # Process command-line arguments to get anything that was passed that way
     parser = argparse.ArgumentParser()
     parser.add_argument('--outdir', default=None,
-                        help='directory for created assignments and records')
+                        help='Directory for created assignments and records')
     parser.add_argument('--student', default=None,
-                        help='individual student for whom to create assignment')
+                        help='Individual student for whom to create assignment')
     parser.add_argument('--students', default=None, 
-                        help='plain text file listing students (one per line)')
+                        help='Plain text file listing students (one per line)')
     parser.add_argument('TEXFILE', nargs='?', default=None,
-                        help='exam file, with or without .tex extension')
+                        help='Assignment file, with or without .tex extension')
     args = parser.parse_args()
     
     # Make sure all paths are OS-appropriate and expanded
@@ -196,7 +218,7 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     else:
         texfiles = [f for f in os.listdir('.') if f.endswith('.tex') and f not in ('name.tex', 'attempt.tex')]
         if not texfiles:
-            sys.exit('No .tex files were found in the current directory')
+            sys.exit('No appropriate .tex files were found in the current directory')
         elif len(texfiles) > 1:
             sys.exit('Multiple .tex files were found; please specify one')
         else:
@@ -245,10 +267,14 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
         if ',' in student:
             lastname, firstname = student.split(',')
         else:
+            # Will fail for multiple, unhyphenated last names
             firstname, lastname = student.rsplit(' ', 1)
         if '"' in firstname:
+            # Assume any nickname will be quoted, after first name, and that
+            # nicknames should be used rather than given names
             firstname = firstname.split('"')[1]
         else:
+            # Extract any initials
             names = [n for n in firstname.split(' ') if not n.endswith('.')]
             firstname = ' '.join(names)
         name = firstname.strip(' ') + ' ' + lastname.strip(' ')
@@ -256,6 +282,7 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
         if lastname not in lastname_dict:
             lastname_dict[lastname.lower()] = student
         else:
+            # This takes care of multiple students with same last name
             lastname_dict[lastname] = None
     # If a single student has been specified, modify the student list
     # Also make sure the student is valid
@@ -278,20 +305,20 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     else:
         old_data = None
     # Create a dictionary for storing new data
-    data = {}
+    data = defaultdict(list)
     # Copy over any old data
     # Use `name_dict` because it contains all names
-    for student in name_dict:
-        if old_data and student in old_data:
-            data[student] = old_data[student]
-        else:
-            data[student] = []
+    if old_data:
+        for student in name_dict:
+            if student in old_data:
+                data[student] = old_data[student]
     
     
     
     # Create assignments
-    # Run pdflatex for the first time
-    # Make sure there are name and attempt files, to avoid TeX errors
+    # Run latex for the first time
+    # Make sure there are "name" and "attempt" files, to avoid TeX errors
+    # This creates PythonTeX auxiliary files, etc.
     if not os.path.isfile(name_file):
         f = open(name_file, 'w')
         f.write('Michael Faraday\\endinput\n')
@@ -308,6 +335,7 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     for extension in ('.txt', '.csv', '.tex'):
         if os.path.isfile(soln_file + extension):
             os.remove(soln_file + extension)
+    soln_extension = None
     for student in students:
         # Save the current name in the file `name.tex`
         name = name_dict[student]
@@ -324,23 +352,23 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
         # Run PythonTeX
         subprocess.call(['pythontex', '--runall', 'true', tex_file])
         
-        # Run pdflatex
+        # Run latex
         subprocess.call(texcmd + [tex_file])
         
         # Read in and store solutions
-        soln_file = os.path.join(doc_dir, 'solution')
-        soln_extension = None
-        for extension in ('.txt', '.csv', '.tex'):
-            if os.path.isfile(soln_file + extension):
-                soln_file += extension
-                soln_extension = extension
-                f = open(soln_file)
-                soln = f.read()
-                f.close()
-                data[student].append(soln)
-                break
-        if soln_extension is None:
-            sys.exit('Missing solutions')
+        # Automatically detect solution extension and reuse it subsequently
+        if not soln_extension:
+            for extension in ('.txt', '.csv', '.tex'):
+                if os.path.isfile(os.path.join(doc_dir, 'solution' + extension)):
+                    soln_extension = extension
+                    break
+            if not soln_extension:
+                sys.exit('Missing solutions')
+        soln_file = os.path.join(doc_dir, 'solution' + soln_extension)
+        f = open(soln_file)
+        soln = f.read()
+        f.close()
+        data[student].append(soln)   
         
         # Move the PDF output to the solutions directory
         pdf_file_named = os.path.join(outdir, '{0}_{1}.pdf'.format(name.replace(' ', '_'), str(attempt)))
@@ -358,7 +386,3 @@ def make(outdir=None, student=None, students=None, texfile=None, texcmd=None, wr
     f = open(data_file, 'wb')
     pickle.dump(data, f, -1)
     f.close()
-
-
-
-

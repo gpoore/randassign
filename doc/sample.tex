@@ -1,5 +1,5 @@
 % Sample file for randassign
-% G. M. Poore, 2013
+% G. M. Poore, 2013-2014
 
 \documentclass{article}
 
@@ -14,8 +14,8 @@ from randassign import RandAssign
 ra = RandAssign()
 ra.solnfmt = '.tex'
 
-from sympy import *
 from sympy.statistics import *
+from sympy.abc import x
 \end{sympycode}
 
 \begin{document}
@@ -24,7 +24,6 @@ from sympy.statistics import *
 
 \begin{sympycode}
 distr = Uniform(1, 10)
-from sympy.abc import x
 p = int(distr.random())
 eq = Derivative(sin(x)**p, x)
 question = r'What is ${0}$?'.format(latex(eq))
@@ -33,9 +32,5 @@ ra.soln.append(question + ' ' + answer + '\n')
 \end{sympycode}
 
 \sympy{question}
-
-\begin{sympycode}
-ra.cleanup()
-\end{sympycode}
 
 \end{document}
