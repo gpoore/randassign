@@ -1,0 +1,50 @@
+% Simple example for RandAssign
+% Geoffrey M. Poore, 2015
+% License:  Creative Commons Zero (CC0) license
+%           https://creativecommons.org/about/cc0
+%
+% Manual compile: run LaTeX, then PythonTeX, then LaTeX again
+% Generate randomized assignments:  run `randassign example_simple.tex`
+
+\documentclass{article}
+
+\usepackage{nopageno}
+\usepackage{pythontex}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+\begin{pycode}
+from randassign import RandAssign
+ra = RandAssign()
+from math import *
+import random
+\end{pycode}
+
+\title{Simple Randomized Assignment \\ {\Large Attempt: \input{attempt.tex}}}
+\author{Name: \underline{~~~~\input{name.tex}~~~~}}
+
+\begin{document}
+
+\maketitle
+
+\begin{pycode}
+a = random.randint(1, 10)
+b = random.randint(1, 10)
+c = sqrt(a**2 + b**2)
+
+drawing = '''
+\\begin{{tikzpicture}}
+\\draw[style=help lines] (0,0) grid (10,10);
+\\filldraw[fill=blue!40!white] (0,0) -- ({a},0) -- ({a},{b}) -- cycle;
+\\end{{tikzpicture}}
+'''.format(a=a, b=b)
+
+ra.addsoln(round(c, 2))
+\end{pycode}
+
+A right triangle has a base of length \py{a} and a height of length \py{b}.  Find the length of the hypotenuse.
+\begin{center}
+\py{drawing}
+\end{center}
+
+\end{document}
