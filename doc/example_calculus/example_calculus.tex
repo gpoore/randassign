@@ -1,0 +1,39 @@
+% Calculus example for RandAssign
+% Geoffrey M. Poore, 2015
+% License:  Creative Commons Zero (CC0) license
+%           https://creativecommons.org/about/cc0
+%
+% Manual compile: run LaTeX, then PythonTeX, then LaTeX again
+% Generate randomized assignments:  run `randassign example_calculus.tex`
+
+\documentclass{article}
+
+\usepackage{nopageno}
+\usepackage{pythontex}
+
+\title{Sample Randomized Assignment \#\input{attempt.tex}}
+\author{Name: \underline{~~~~\input{name.tex}~~~~}}
+
+\begin{pycode}
+from sympy import *
+from sympy.abc import x
+import random
+from randassign import RandAssign
+ra = RandAssign()
+\end{pycode}
+
+\begin{document}
+
+\maketitle
+
+\begin{pycode}
+p = int(random.randint(1, 10))
+eq = Derivative(sin(x)**p, x)
+question = r'What is ${0}$?'.format(latex(eq))
+answer = r'${0}$'.format(latex(eq.doit()))
+ra.addsoln(answer, info=question)
+\end{pycode}
+
+\py{question}
+
+\end{document}
