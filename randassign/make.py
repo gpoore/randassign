@@ -950,7 +950,7 @@ _solntemplatesolnsingleinfo_tex = '''\
 
 
 _solntemplatesolnmultiwrapper_tex = '''\
-\\item[{number}.]
+\\item[{number}.] ~
     \\begin{{enumerate}}[(a)]
     {solution}
     \\end{{enumerate}}
@@ -990,7 +990,7 @@ _solntemplatestudent_md = '''\
 '''
 
 _solntemplatesolnsattempt_md = '''\
-### Attempt {Attempt}
+### Attempt {attempt}
 
 '''
 
@@ -998,36 +998,35 @@ _solntemplatesolnswrapper_md = '''\
 {solution}'''
 
 _solntemplatesolnsingle_md = '''\
-**{number}**
 
-:   {solution}
+**{number}**.  {solution}
 
 '''
 
 _solntemplatesolnsingleinfo_md = '''\
-**{number}**
 
-:   {info}
-:   {solution}
+**{number}**.  {info}
+
+  * {solution}
 
 '''
 
 _solntemplatesolnmultiwrapper_md = '''\
-**{number}**
 
-:   {solution}
+**{number}**.
+
+{solution}
 
 '''
 
 _solntemplatesolnmultiwrapperinfo_md = '''\
-**{number}**
 
-:   {info}
-:
+**{number}**.  {info}
+
 {solution}
 
 '''
 
 _solntemplatesolnmulti_md = '''\
-    * {solution}
+  * {solution}
 '''
