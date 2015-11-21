@@ -8,6 +8,8 @@
 Create randomized assignments with solutions/keys using Python and LaTeX.
 
 
+.. contents::
+
 
 Installation
 ------------
@@ -18,13 +20,17 @@ For the latest version, download the source from GitHub_, then run::
 
     python setup.py install
 
-The package will also be available on PyPI_ (the Python Package Index) soon.
-Then it may be installed via::
+The package is also available on PyPI_ (the Python Package Index).  Install
+via::
 
    pip install randassign
 
+Or use::
+
+  easy_install randassign
+
 Requires the PythonTeX_ package for LaTeX.  PythonTeX is part of the full
-TeX Live installation; it may also be installed via the TeX Live package
+`TeX Live`_ installation; it may also be installed via the TeX Live package
 manager, or using the Python installation script that is bundled with PythonTeX
 (this supports MiKTeX).
 
@@ -34,19 +40,22 @@ manager, or using the Python installation script that is bundled with PythonTeX
 
 .. _PyPI:  https://pypi.python.org/pypi
 
-
+.. _TeX Live:  https://www.tug.org/texlive/
 
 Standard usage
 --------------
 
-The steps to create a typical randomized assignment are listed below.  Complete
-examples are included in the documentation.
+The steps to create a typical randomized assignment are listed below.  Or
+consult the available `complete examples`_.
+
+.. _complete examples:  https://github.com/gpoore/randassign/tree/master/doc
 
 * Create a LaTeX document, with ``\usepackage{pythontex}``.  Have this file
   ``\input`` a file ``name.tex`` that contains a placeholder name for the
   person who will take the assignment.  Also ``\input`` a file ``attempt.tex``
   that contains a placeholder integer for the number of attempts the person
-  taking the assignment has made (optional).
+  taking the assignment has made (optional; depends on keyword argument
+  ``multipleattempts``, described below).
 
 * Write the assignment within the LaTeX document, using PythonTeX as desired
   to generate random values for parameters.
@@ -126,11 +135,11 @@ arguments to ``randassign``'s ``make()`` function::
     make(texfile='<tex_file>', <kwargs>)
 
 The ``make()`` function accepts the following keyword arguments.  Note that
-all paths (all ``*dir`` keywords) are interpreted relative to the LaTeX file's
-directory, rather than relative to the current working directory.  This ensures
-that LaTeX functions smoothly and does not attempt to write to directories
-outside the document directory and its subdirectories.  Absolute paths may be
-used when this behavior is not desired.
+all paths (including all ``*dir`` keywords) are interpreted relative to the
+LaTeX file's directory, rather than relative to the current working directory.
+This ensures that LaTeX functions smoothly and does not attempt to write to
+directories outside the document directory and its subdirectories.  Absolute
+paths may be used when this behavior is not desired.
 
 Unix-style paths with forward slashes, and with leading ``~`` expanding to the
 user's home directory, will work under all systems, including Windows.
@@ -174,7 +183,7 @@ user's home directory, will work under all systems, including Windows.
   LaTeX file containing the number of the current attempt.
 
 ``student`` (*str*) default: ``None``
-  An individual student for whome to generate assignments.
+  An individual student for whom to generate assignments.
 
 ``studentfile`` (*str*) default:  ``students.txt``
   File containing the names of all students.  ``txt`` files with names in

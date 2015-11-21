@@ -731,7 +731,10 @@ def _run(data, createdfiles, students, students_raw, student_raw_str,
             newfile = os.path.join(assigndir, '{0}.pdf'.format(student_raw_str.replace('"', '').replace('.', '')))
         # Need `abspath()` to ensure functioning
         createdfiles.append(os.path.abspath(newfile))
-        shutil.copy(pdffile, newfile)
+        if not os.path.isfile(newfile):
+            shutil.copy(pdffile, newfile)
+        else:
+            raise RuntimeError('The assignment "{0}" already exists; this may be due to a previous error, or two randassign files in the same directory (in which case, consider setting "randassigndir" to a custom value)'.format(newfile))
 
     if not silent:
         print(' '*40 + '\r', end='')
