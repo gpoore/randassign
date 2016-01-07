@@ -1,0 +1,150 @@
+% 1D electric force example for RandAssign
+% Geoffrey M. Poore, 2016
+% License:  Creative Commons Zero (CC0) license
+%           https://creativecommons.org/about/cc0
+%
+% Manual compile: run LaTeX, then PythonTeX, then LaTeX again
+% Generate randomized assignments:  run `randassign example_electric_force_1d.tex`
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+
+\usepackage{siunitx}
+\usepackage{pythontex}
+\usepackage{pgfplots}
+\usepackage{nopageno}
+
+
+\title{Electric Field in 1D}
+\author{\Large Name:  \underline{~~\input{name}~~} \\~\\ Attempt: \input{attempt}}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\hrule\vspace{0.02in}\hrule
+~\linebreak~\linebreak
+
+\noindent For each configuration, find the electric field at charge $q$ due to charges $Q_1$ and $Q_2$.  Then find the resulting force on $q$.
+
+
+\begin{pycode}
+from pylab import *
+import random
+
+from randassign import RandAssign
+ra = RandAssign()
+
+def make_problem():
+    # Constants
+    k =  8.9875517873681764e9
+    
+    # Functions for generating random values
+    def rand_charge():
+        return random.choice([-1, 1])*random.randrange(10, 100)*1e-6
+    def rand_pos():
+        return (random.randrange(-10, 10), 0)
+    
+    # Charge q parameters
+    q = rand_charge()
+    x, y = rand_pos()
+    
+    # Charge 1 parameters
+    Q1 = rand_charge()
+    while Q1 == q:
+        Q1 = rand_charge()
+    x1, y1 = rand_pos()
+    while x1 == x:
+        x1, y1 = rand_pos()
+    
+    # Charge 2 parameters
+    Q2 = rand_charge()
+    while Q2 == q or Q2 == Q1:
+        Q2 = rand_charge()
+    x2, y2 = rand_pos()
+    while x2 == x or x2 == x1:
+        x2, y2 = rand_pos()
+    
+    # The calculation below could be made simpler for a 1D case
+    # The more general approach is used so that the code may be adapted to 2D
+    
+    # Calculate field from 1
+    r1 = sqrt((x-x1)**2 + (y-y1)**2)
+    E1 = k*abs(Q1)/r1**2
+    theta1 = arctan2(sign(Q1)*(y-y1), sign(Q1)*(x-x1))
+    E1x = E1*cos(theta1)
+    E1y = E1*sin(theta1)
+    
+    # Calculate field from 2
+    r2 = sqrt((x-x2)**2 + (y-y2)**2)
+    E2 = k*abs(Q2)/r2**2
+    theta2 = arctan2(sign(Q2)*(y-y2), sign(Q2)*(x-x2))
+    E2x = E2*cos(theta2)
+    E2y = E2*sin(theta2)
+    
+    # Calculate total field
+    Ex = E1x + E2x
+    Ey = E1y + E2y
+    E = sqrt(Ex**2 + Ey**2)
+    theta = arctan2(Ey, Ex)
+    
+    # Calculate the force due to the field
+    F = abs(q)*E
+    Fx = q*Ex
+    Fy = q*Ey
+    theta_F = arctan2(Fy, Fx)
+    
+    # Diagrams are created using the PGFPlots package for LaTeX
+    # It would also be possible to use a Python plotting library
+    problem_template = r'''
+    \textbf{{Charges}}:
+    $q=\SI{{{0:.3g}}}{{\micro\coulomb}}$,
+    $Q_1=\SI{{{1:.3g}}}{{\micro\coulomb}}$, and
+    $Q_2=\SI{{{2:.3g}}}{{\micro\coulomb}}$.
+    
+    \begin{{center}}
+    \begin{{tikzpicture}}
+    \begin{{axis}}[
+        x=0.65cm, y=0.65cm,
+        anchor=origin,
+        at={{(0pt,0pt)}},
+        disabledatascaling,
+        xlabel=$x$ (m),
+        ylabel=$y$ (m),
+        xmin=-11, xmax=11, ymin=-2, ymax=2,
+        grid=both]
+    \draw[black,fill] ({3},{4}) circle (2pt) node [above] {{$q$}};
+    \draw[black,fill] ({5},{6}) circle (2pt) node [above] {{$Q_1$}};
+    \draw[black,fill] ({7},{8}) circle (2pt) node [above] {{$Q_2$}};
+    \end{{axis}}
+    \end{{tikzpicture}}
+    \end{{center}}
+    '''
+    
+    problem = problem_template.format(q/1e-6, Q1/1e-6, Q2/1e-6, x, y, x1, y1, x2, y2)
+    
+    # For a 1D case, want the x component of the field and force
+    return (problem, Ex, Fx)
+
+# Generate 4 unique problems
+# The chance of two identical problems is very low in this case
+# But checking for identical problems won't hurt
+problems = []
+while len(problems) < 4:
+    p, e, f = make_problem()
+    if p not in problems:
+        problems.append(p)
+        t = '\\SI{{{0:.3g}}}{{\\newton/\\coulomb}} and \\SI{{{1:.3g}}}{{\\newton}}'
+        ra.addsoln(t.format(e, f))
+
+print('\\begin{enumerate}')
+for n, p in enumerate(problems):
+    print('\\item ' + p)
+    if n+1 < len(problems):
+        print(r'\vspace{1in}')
+print('\\end{enumerate}')
+\end{pycode}
+
+\end{document}
