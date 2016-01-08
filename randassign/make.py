@@ -469,7 +469,7 @@ def _load_students(student, studentfile, parsestudentfile, parsestudentname):
     is parsed for an exact match for ``student``, and if this fails, then for
     a unique, full-word, partial match at the beginning or end.
     '''
-    students, students_raw, student_raw_str = parsestudentfile(studentfile, parsestudentname)
+    students, students_raw, students_raw_str = parsestudentfile(studentfile, parsestudentname)
 
     # Deal with case of generating for only a single student
     if student is not None:
@@ -497,10 +497,11 @@ def _load_students(student, studentfile, parsestudentfile, parsestudentname):
             n = students.index(matches[0])
             students = [students[n]]
             students_raw = [students_raw[n]]
+            students_raw_str = [students_raw_str[n]]
         else:
             raise RuntimeError('Found multiple matches for student "{0}":  {1}'.format(student, matches))
 
-    return students, students_raw, student_raw_str
+    return students, students_raw, students_raw_str
 
 
 
@@ -641,11 +642,8 @@ def _run(data, createdfiles, students, students_raw, student_raw_str,
             with open(namefile, 'w', encoding='utf8') as f:
                 f.write('{0}\\endinput\n'.format(student))
 
-        if attemptfile is not None:
-            if student_raw_str not in data:
-                attempt = 1
-            else:
-                attempt = len(data[student_raw_str]['solutions']) + 1
+        if multipleattempts:
+            attempt = len(data[student_raw_str]['solutions']) + 1
             with open(attemptfile, 'w', encoding='utf8') as f:
                 f.write('{0}\\endinput\n'.format(attempt))
         else:
@@ -818,7 +816,7 @@ def _writesoln(data, verbose=None, silent=None,
             wrapper = True
             for n, s in enumerate(solnset):
                 if isinstance(s, str):
-                    solution.append(solntemplatesolnsingle.format(number=n, solution=s))
+                    solution.append(s)
                     wrapper = False
                 elif isinstance(s, dict):
                     if len(s['solution']) == 1:
